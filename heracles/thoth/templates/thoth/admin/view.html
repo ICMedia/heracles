@@ -1,0 +1,27 @@
+{% extends "thoth/bits.base.html" %}
+{% load bootstrap3 %}
+
+{% block main_content %}
+<a href="?view_as_admin=n" style="float: right;">View as user</a>
+<h2>View booking</h2>
+<h3>Booking created by <strong>{{ booking.user }}</strong></h3>
+
+<h4>Current state</h4>
+<p>This booking is currently <strong>{{ booking.state.state.title }}</strong>.</p>
+{% if booking.state.state.name == "pending_approval" %}
+  <p>It will automatically advance to <strong>Approved</strong> once all its parts have been approved.</p>
+{% endif %}
+
+<h4>Parts</h4>
+<p>The booking consists of:</p>
+{% include "thoth/bits.booking_table.html" with mode="admin" show_state=True booking_parts=booking.booking_parts.all %}
+
+<h4>Notes</h4>
+{{ booking.notes|linebreaks }}
+
+{% if booking.cancel.is_available %}
+  <h4>Cancel booking</h4>
+  <p>If you cancel this booking, it will automatically cancel all the sub-parts. <strong>This action is irreversible!</strong></p>
+  <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button type="submit" class="btn btn-danger">Cancel</button></form>
+{% endif %}
+{% endblock %}

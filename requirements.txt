@@ -1,0 +1,9 @@
+https://www.djangoproject.com/download/1.7c3/tarball/#egg=Django
+Pillow==2.5.3
+python-krbV==1.0.90
+django-xworkflows==0.9.3
+django_activeurl==0.1.8
+pytz==2014.4
+django-bootstrap3==4.11.0
+django-bootstrap3-datetimepicker==2.2.3
+django-debug-toolbar==1.2.1

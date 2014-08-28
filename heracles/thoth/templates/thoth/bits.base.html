@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block title %}Bookings{% endblock %}
+
+{% block message_block %}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-sm-9 col-md-10 col-sm-push-3 col-md-push-2">
+    <h1>Bookings</h1>
+    {% bootstrap_messages %}
+    {% block main_content %}{% endblock %}
+  </div>
+  <div class="col-sm-3 col-md-2 col-sm-pull-9 col-md-pull-10 sidebar-pf sidebar-pf-left">
+    {% include "thoth/bits.sidebar.html" %}
+  </div>
+</div>
+{% endblock %}

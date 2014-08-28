@@ -1,0 +1,260 @@
+{% extends "thoth/bits.base.html" %}
+{% load bootstrap3 %}
+
+{% block main_content %}
+<h2>Make a new booking</h2>
+
+{% if booking_is_complex %}
+<div class="alert alert-warning">
+  <span class="pficon-layered">
+    <span class="pficon pficon-warning-triangle"></span>
+    <span class="pficon pficon-warning-exclamation"></span>
+  </span>
+  This booking is considered <strong>complex</strong> since it contains one or more components which will require approval by separate individuals. Although this is possible, it may take longer than usual to process.
+</div>
+{% endif %}
+
+<div class="panel-group" id="booking-accordion">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#booking-accordion" href="#ba-my-booking" class="{% if not booking_parts %}collapsed{% endif %}">
+          This booking so far
+        </a>
+      </h4>
+    </div>
+    <div id="ba-my-booking" class="panel-collapse collapse{% if booking_parts %} in{% endif %}">
+      <div class="panel-body">
+        {% if booking_parts %}
+        <p>Your booking currently consists of:</p>
+{% include "thoth/bits.booking_table.html" with mode="create" show_state=False %}
+        <form class="text-right" action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="clear_bookin"><button type="submit" class="btn btn-danger">Clear Booking</button></form>
+        {% else %}
+        <p>Your booking is currently empty. To get started, {% if not from_date or not to_date %}select some dates below{% else %}choose some items from the list{% endif %}.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#booking-accordion" href="#ba-add-items" class="{% if booking_parts %}collapsed{% endif %}">
+          Add {% if booking_parts %}more {% endif %}items
+        </a>
+      </h4>
+    </div>
+    <div id="ba-add-items" class="panel-collapse collapse{% if not booking_parts %} in{% endif %}">
+      <div class="panel-body">
+        <p>Please choose the dates and times between which you would like to book something. Click the icon on the right-hand side of the date fields for a date picker.</p>
+        <form action="" method="GET">
+          {% bootstrap_form date_range_form layout='horizontal' label_class='sr-only' %}
+          {% buttons %}
+            <button type="submit" class="btn btn-primary">
+              Go
+            </button>
+          {% endbuttons %}
+        </form>
+
+{% if available %}
+        <table class="datatable datatable-items table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Approvers</th>
+              <th></th>
+              <th>Extra Data</th>
+            </tr>
+          </thead>
+          <tbody>
+{% for item in available %}
+            <tr class="{% if item.booked_by_me %}item-booked-self {% else %}{% if item.bookings_during_period > 0 %}item-booked-tentative {% endif %}{% if item.firm_bookings_during_period %}item-booked-firm {% endif %}{% endif %}{% if not item.available %}item-unavailable {% endif %}">
+               <td>
+<div class="when-shown">
+  <i class="fa fa-angle-down"></i>
+</div>
+<div class="when-hidden">
+  <i class="fa fa-angle-right"></i>
+</div>
+               </td>
+               <td>{{ item }}</td>
+               <td>{{ item.type }}</td>
+               <td>{{ item.owners.all|join:", " }}</td>
+               <td>
+{% if item.booked_by_me %}
+                 <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="remove_part"><input type="hidden" name="part_id" value="{{ item.booked_by_me }}"><button type="submit" class="btn btn-danger">Remove</button></form>
+{% elif item.firm_bookings_during_period > 0 %}
+                 <span class="label label-danger">Already booked</span>
+{% elif not item.available %}
+                 <span class="label label-danger">Unavailable</span>
+{% elif item.bookings_during_period > 0 %}
+                 <span class="label label-warning">Tentatively booked</span>
+{% else %}
+                 <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="book_item"><input type="hidden" name="item" value="{{ item.id }}"><input type="hidden" name="from_date" value="{{ from_date|date:'Y-m-d H:i:s' }}"><input type="hidden" name="to_date" value="{{ to_date|date:'Y-m-d H:i:s' }}"><button type="submit" class="btn btn-success">Book</button></form>
+{% endif %}
+               </td>
+               <td class="extra-data">
+                 {% if item.warning_message %}
+                   <div class="alert alert-warning">
+                     <span class="pficon-layered">
+                       <span class="pficon pficon-warning-triangle"></span>
+                       <span class="pficon pficon-warning-exclamation"></span>
+                     </span>
+                     <strong>Hold it!</strong> {{ item.warning_message }}
+                   </div>
+                 {% endif %}
+
+                 {% if item.booked_by_me %}
+                 {% elif item.firm_bookings_during_period > 0 %}
+                   <div class="alert alert-danger">
+                     <span class="pficon-layered">
+                       <span class="pficon pficon-error-octagon"></span>
+                       <span class="pficon pficon-error-exclamation"></span>
+                     </span>
+                     <strong>This item is already booked.</strong> <a href="{% url 'thoth-public-item-calendar' slug=item.slug %}">View the calendar for this item.</a>
+                   </div>
+                 {% elif item.bookings_during_period > 0 %}
+                   <div class="alert alert-warning">
+                     <span class="pficon-layered">
+                       <span class="pficon pficon-warning-triangle"></span>
+                       <span class="pficon pficon-warning-exclamation"></span>
+                     </span>
+                     <strong>This item already has an unapproved booking placed for it during this time period.</strong> Your booking may be sent back if the prior booking is successful. <a href="{% url 'thoth-public-item-calendar' slug=item.slug %}">View the calendar for this item.</a>
+                   </div>
+                 {% elif not item.available %}
+                   <div class="alert alert-danger">
+                     <span class="pficon-layered">
+                       <span class="pficon pficon-error-octagon"></span>
+                       <span class="pficon pficon-error-exclamation"></span>
+                     </span>
+                     <strong>This item cannot be booked at present.</strong>
+                     {% if item.unavailable_message|length == 0 %}
+                       Please contact the responsible approvers for more information.
+                     {% else %}
+                       {{ item.unavailable_message }}
+                     {% endif %}
+                   </div>
+                 {% else %}
+                   <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="book_item"><input type="hidden" name="item" value="{{ item.id }}"><input type="hidden" name="from_date" value="{{ from_date|date:'Y-m-d H:i:s' }}"><input type="hidden" name="to_date" value="{{ to_date|date:'Y-m-d H:i:s' }}"><button type="submit" class="btn {% if item.bookings_during_period > 0 %}btn-warning{% else %}btn-success{% endif %}">Book</button></form>
+                 {% endif %}
+
+<p>{{ item.description }}</p>
+               </td>
+             </tr>
+{% endfor %}
+          </tbody>
+        </table>
+{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#booking-accordion" href="#ba-done" class="collapsed">
+          I'm done!
+        </a>
+      </h4>
+    </div>
+    <div id="ba-done" class="panel-collapse collapse">
+      <div class="panel-body">
+{% if booking_valid %}
+        <p>To send off your booking to be approved, please write some notes in the box below, then click the "Submit booking" button.</p>
+        <p>Useful things to add as a note include:</p>
+        <ul>
+          <li>What the booking is for (like the event, etc.)</li>
+          <li>Contact details (like a mobile phone number)</li>
+          <li>Any special requests for the booking as a whole</li>
+        </ul>
+        <form action="" method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit">
+          {% bootstrap_form notes_form layout='inline' %}
+          {% buttons %}
+            <button type="submit" class="btn btn-success">Submit booking</button>
+          {% endbuttons %}
+        </form>
+{% else %}
+        <div class="alert alert-danger">
+          <span class="pficon-layered">
+            <span class="pficon pficon-error-octagon"></span>
+            <span class="pficon pficon-error-exclamation"></span>
+          </span>
+          <strong>Whoops!</strong> There appear to be some errors in your booking. Before you can continue, you'll have to correct these. Have a look in the "My booking so far" section above for more information.
+        </div>
+{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head_script %}
+  {{ date_range_form.media }}
+{% endblock %}
+
+{% block extra_body_script %}
+<script>
+$(document).ready(function() {
+  var table = $('.datatable-items').DataTable({
+    'columnDefs': [
+      {
+        'targets': [ 5 ],
+        'searchable': false,
+        'visible': false,
+        'orderable': false,
+      },
+      {
+        'targets': [ 4 ],
+        'searchable': false,
+        'orderable': false,
+      },
+      {
+        'targets': [ 0 ],
+        'searchable': false,
+        'orderable': false,
+        'class': 'details-control',
+      }
+    ],
+    order: [[1, "desc"]],
+  });
+
+  $('.datatable-items tbody').on('click', 'td.details-control', function() {
+    var tr = $(this).closest('tr');
+    var row = table.row(tr);
+
+    if (row.child.isShown()) {
+      row.child.hide();
+      tr.removeClass('shown');
+    } else {
+      row.child(row.data()[5]).show();
+      tr.addClass('shown');
+    }
+  });
+});
+</script>
+{% endblock %}
+
+{% block extra_head_css %}
+<style type="text/css">
+.details-control {
+  cursor: pointer;
+}
+.details-control .when-shown {
+  display: none;
+}
+.shown .details-control .when-shown {
+  display: block;
+}
+.shown .details-control .when-hidden {
+  display: none;
+}
+
+.datatable-items tbody tr {
+  min-height: 32px;
+}
+</style>
+{% endblock %}
+
+{% block datatables_script %}{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "thoth/bits.base.html" %}
+{% load bootstrap3 %}
+
+{% block main_content %}
+{% if thoth_admin %}
+  <a href="?view_as_admin=y" style="float: right;">View as admin</a>
+{% endif %}
+
+<h2>View booking</h2>
+<p>Your booking is currently <strong>{{ booking.state.state.title }}</strong>.</p>
+
+<p>Your booking consists of:</p>
+{% include "thoth/bits.booking_table.html" with mode="public_view" show_state=True booking_parts=booking.booking_parts.all %}
+
+<h4>Notes</h4>
+{{ booking.notes|linebreaks }}
+
+{% if booking.cancel.is_available %}
+  <h4>Cancel booking</h4>
+  <p>Once you have cancelled your booking, it cannot be un-done.</p>
+  <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel"><button type="submit" class="btn btn-danger">Cancel</button></form>
+{% endif %}
+{% endblock %}

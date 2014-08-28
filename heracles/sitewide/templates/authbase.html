@@ -1,0 +1,33 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<!--[if IE 8]><html class="ie8"><![endif]-->
+<!--[if IE 9]><html class="ie9"><![endif]-->
+<!--[if gt IE 9]><!-->
+<html class="login-pf {% block extra_html_classes %}{% endblock %}">
+<!--<![endif]-->
+  <head>
+    <title>{% block title %}{% endblock %} - Heracles</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{% static "css/patternfly.css" %}" rel="stylesheet" media="screen, print">
+    {% block extra_head_css %}{% endblock %}
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+    <script src="{% static "bower_components/html5shiv/dist/html5shiv.min.js" %}"></script>
+    <script src="{% static "bower_components/respond/dest/respond.min.js"></script>
+    <![endif]-->
+    <!-- IE8 requires jQuery and Bootstrap JS to load in head to prevent rendering bugs -->
+    <!-- IE8 requires jQuery v1.x -->
+    <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="{% static "bower_components/bootstrap/dist/js/bootstrap.min.js" %}"></script>
+    <script src="{% static "js/patternfly.min.js" %}"></script>
+    {% block extra_head_script %}{% endblock %}
+  </head>
+  <body>
+    <span id="badge">
+      <img src="{% static "img/logo.svg" %}" alt="Logo" />
+    </span>
+    <div class="container">
+{% block content %}{% endblock %}
+    </div><!--/.container-->
+  </body>
+</html>

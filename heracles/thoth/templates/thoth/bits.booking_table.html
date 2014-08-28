@@ -1,0 +1,60 @@
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th>Type</th>
+      <th>Approvers</th>
+      <th>Start Date</th>
+      <th>End Date</th>
+{% if show_state %}
+      <th>State</th>
+{% endif %}
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+{% for part in booking_parts %}
+    <tr class="{% if part in failed_parts %}part-row-failed{% endif %}">
+      <th{% if part in failed_parts %} rowspan="2"{% endif %}>{{ part.lendable }}</th>
+      <td>{{ part.lendable.type }}</td>
+      <td>{{ part.lendable.owners.all|join:", " }}</td>
+      <td>{{ part.start_date }}</td>
+      <td>{{ part.end_date }}</td>
+{% if show_state %}
+      <td>{{ part.state.state.title }}</td>
+{% endif %}
+      <td class="text-right">
+{% if mode == 'create' %}
+        <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="remove_part"><input type="hidden" name="part_id" value="{{ part.id }}"><button type="submit" class="btn btn-danger">Remove</button></form>
+{% elif mode == 'admin' %}
+  {% for transition in part.state.transitions %}
+        <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="change_state"><input type="hidden" name="part_id" value="{{ part.id }}"><input type="hidden" name="transition" value="{{ transition.name }}"><button type="submit" class="btn btn-success">{{ transition.name }}</button></form>
+  {% endfor %}
+{% elif mode == 'public_view' %}
+  {% if part.cancel.is_available %}
+        <form action="" method="POST">{% csrf_token %}<input type="hidden" name="action" value="cancel_part"><input type="hidden" name="part_id" value="{{ part.id }}"><button type="submit" class="btn btn-danger">Cancel</button></form>
+  {% endif %}
+{% endif %}
+      </td>
+    </tr>
+{% if part in failed_parts %}
+    <tr>
+      <td colspan="5">
+        <div class="alert alert-danger">
+          <span class="pficon-layered">
+            <span class="pficon pficon-error-octagon"></span>
+            <span class="pficon pficon-error-exclamation"></span>
+          </span>
+          <p>There are some issues with this part of your booking:</p>
+          <ul>
+            {% for error in part.failure_messages %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </td>
+    </tr>
+{% endif %}
+{% endfor %}
+  </tbody>
+</table>

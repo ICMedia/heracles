@@ -1,0 +1,76 @@
+{% extends "thoth/bits.base.html" %}
+{% load bootstrap3 %}
+
+{% block main_content %}
+<h2>View item: <strong>{{ lendable.name }}</strong></h2>
+
+<table class="table table-calendar">
+  <thead>
+    <tr>
+      <td colspan="7" class="text-center">
+        <a href="?date={{ last_date|date:"Y-m-d" }}" class="prev-month month-link btn btn-default">{{ last_date|date:"F Y" }}</a>
+        <a href="?date={{ next_date|date:"Y-m-d" }}" class="next-month month-link btn btn-default">{{ next_date|date:"F Y" }}</a>
+        <h3>{{ date|date:"F Y" }}</h3>
+      </td>
+    </tr>
+    <tr>
+{% for weekday in weekdays %}
+      <th class="text-center calendar-day-head">{{ weekday }}</th>
+{% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+{% for week in calendar %}
+    <tr>
+      {% for day in week %}
+        <td class="calendar-day{% if not day.is_this_month %} calendar-day-not-current-month{% endif %}">
+          <div class="calendar-day-text">{{ day.date }}</div>
+          <ul class="calendar-day-events list-unstyled">
+            {% for event in day.events %}
+              <li><span class="label label-{{ event.label_suffix }}">
+                  {% if event.starts_today or event.ends_today %}({% endif %}{% if event.starts_today %}{{ event.start_time|date:"H:i" }}{% endif %}{% if event.starts_today or event.ends_today %}-{% endif %}{% if event.ends_today %}{{ event.end_time|date:"H:i" }}{% endif %}{% if event.starts_today or event.ends_today %}){% endif %}<span class="hidden-xs hidden-sm"> {{ event.title }}</span>
+              </span></li>
+            {% endfor %}
+          </ul>
+        </td>
+      {% endfor %}
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+
+<div class="panel panel-default">
+  <div class="panel-heading">Colour key</div>
+  <div class="panel-body">
+    <ul class="list-unstyled">
+      {% for c in state_key %}
+        {% if c.2 %}
+          <li><span class="label label-{{ c.2 }}">{{ c.1 }}</span></li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head_css %}
+<style type="text/css">
+.calendar-day, .calendar-day-head {
+  width: 14.2857143%;
+}
+.calendar-day {
+  height: 7em;
+}
+.calendar-day-not-current-month {
+  opacity: 0.7;
+}
+.month-link {
+}
+.prev-month {
+  float: left;
+}
+.next-month {
+  float: right;
+}
+</style>
+{% endblock %}
